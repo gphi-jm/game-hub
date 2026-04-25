@@ -3,9 +3,9 @@ import './globals.css'
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
 export const metadata = {
-  title: 'NEON PORTAL - Ultimate Gaming Experience',
-  description: 'Your gateway to the ultimate gaming experience. Discover and play the best tactical FPS, social chaos, stealth action, and sci-fi combat games.',
-  keywords: ['gaming', 'games', 'neon portal', 'FPS', 'bingo', 'action', 'sci-fi', 'online games'],
+  title: 'Game Library - Tactical Interface',
+  description: 'A Valorant-inspired game library with chevron cards, gold active states, and a pine-green HUD.',
+  keywords: ['gaming', 'game library', 'tactical ui', 'valorant-inspired', 'fps', 'action'],
   authors: [{ name: 'Game Hub' }],
   creator: 'Game Hub',
   publisher: 'Game Hub',
@@ -19,22 +19,22 @@ export const metadata = {
     type: 'website',
     locale: 'en_US',
     url: siteUrl,
-    title: 'NEON PORTAL - Ultimate Gaming Experience',
-    description: 'Your gateway to the ultimate gaming experience. Play NET FLEX, BINGO FIESTA, PHANTOM, and TEKHEN.',
-    siteName: 'NEON PORTAL',
+    title: 'Game Library - Tactical Interface',
+    description: 'High-performance game cards, a fixed HUD, and a Baguio Pine / Victory Gold palette.',
+    siteName: 'Game Hub',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'NEON PORTAL Gaming Platform',
+        alt: 'Game Library tactical interface',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NEON PORTAL - Ultimate Gaming Experience',
-    description: 'Your gateway to the ultimate gaming experience. Play NET FLEX, BINGO FIESTA, PHANTOM, and TEKHEN.',
+    title: 'Game Library - Tactical Interface',
+    description: 'High-performance game cards, a fixed HUD, and a Baguio Pine / Victory Gold palette.',
     images: ['/og-image.png'],
   },
   robots: {

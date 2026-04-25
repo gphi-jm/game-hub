@@ -1,53 +1,86 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import GameCard from '../components/GameCard'
 
 const API_URL = 'https://docking-635955947416.asia-east1.run.app/api/games/'
 
-const cardThemes = [
-  {
-    bg: '#0b1d24',
-    bg2: '#041015',
-    accent: '#43d8ff',
-    soft: 'rgba(67, 216, 255, 0.8)',
-    glow: 'rgba(67, 216, 255, 0.28)',
-    buttonFg: '#031119',
-  },
-  {
-    bg: '#23110a',
-    bg2: '#0f0603',
-    accent: '#ff8a3d',
-    soft: 'rgba(255, 138, 61, 0.8)',
-    glow: 'rgba(255, 138, 61, 0.28)',
-    buttonFg: '#170801',
-  },
-  {
-    bg: '#1b1024',
-    bg2: '#09050d',
-    accent: '#ff67c8',
-    soft: 'rgba(255, 103, 200, 0.8)',
-    glow: 'rgba(255, 103, 200, 0.28)',
-    buttonFg: '#190713',
-  },
-  {
-    bg: '#0f2412',
-    bg2: '#050b06',
-    accent: '#62ff7f',
-    soft: 'rgba(98, 255, 127, 0.8)',
-    glow: 'rgba(98, 255, 127, 0.28)',
-    buttonFg: '#051009',
-  },
-]
+const modulo = (value, length) => ((value % length) + length) % length
 
-const buildTheme = (index) => cardThemes[index % cardThemes.length]
+const buildVisibleGames = (games, activeIndex) => {
+  if (!games.length) {
+    return []
+  }
+
+  if (games.length <= 6) {
+    return games.map((game, index) => {
+      const progress = ((index + 2) * 17) % 100
+
+      return {
+        ...game,
+        sourceIndex: index,
+        offset: index - activeIndex,
+        progress: progress === 0 ? 88 : progress,
+      }
+    })
+  }
+
+  const offsets = [-2, -1, 0, 1, 2, 3]
+
+  return offsets.map((offset) => {
+    const index = modulo(activeIndex + offset, games.length)
+    const progress = ((index + 2) * 17) % 100
+
+    return {
+      ...games[index],
+      sourceIndex: index,
+      offset,
+      progress: progress === 0 ? 88 : progress,
+    }
+  })
+}
+
+const mergeGameCollections = (games, featuredGames, newGames) => {
+  const gameMap = new Map()
+
+  for (const game of games) {
+    gameMap.set(game.id, { ...game })
+  }
+
+  for (const game of newGames) {
+    const existing = gameMap.get(game.id) ?? {}
+    gameMap.set(game.id, {
+      ...existing,
+      ...game,
+      is_new: true,
+    })
+  }
+
+  for (const game of featuredGames) {
+    const existing = gameMap.get(game.id) ?? {}
+    gameMap.set(game.id, {
+      ...existing,
+      ...game,
+      is_featured: true,
+    })
+  }
+
+  const featuredIds = new Set(featuredGames.map((game) => game.id))
+  const orderedFeatured = featuredGames.map((game) => gameMap.get(game.id))
+  const orderedRemainder = games
+    .filter((game) => !featuredIds.has(game.id))
+    .map((game) => gameMap.get(game.id))
+
+  return [...orderedFeatured, ...orderedRemainder]
+}
 
 export default function Home() {
-  const [activeSection, setActiveSection] = useState('home')
   const [games, setGames] = useState([])
+  const [featuredGames, setFeaturedGames] = useState([])
+  const [newGames, setNewGames] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const visibleGames = activeSection === 'home' ? games.slice(0, 4) : games
+  const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -63,15 +96,24 @@ export default function Home() {
           throw new Error(`Request failed with status ${response.status}`)
         }
 
-        const data = await response.json()
-        const normalizedGames = Array.isArray(data)
-          ? data.map((game, index) => ({
+        const payload = await response.json()
+        const normalizedGames = Array.isArray(payload?.data?.games) ? payload.data.games : []
+        const normalizedFeaturedGames = Array.isArray(payload?.data?.featured_games)
+          ? payload.data.featured_games.map((game) => ({
               ...game,
-              theme: buildTheme(index),
+              is_featured: true,
+            }))
+          : []
+        const normalizedNewGames = Array.isArray(payload?.data?.new_games)
+          ? payload.data.new_games.map((game) => ({
+              ...game,
+              is_new: true,
             }))
           : []
 
         setGames(normalizedGames)
+        setFeaturedGames(normalizedFeaturedGames)
+        setNewGames(normalizedNewGames)
       } catch (fetchError) {
         if (fetchError.name !== 'AbortError') {
           setError('Unable to load games right now.')
@@ -86,59 +128,158 @@ export default function Home() {
     return () => controller.abort()
   }, [])
 
+  const selectorGames = useMemo(
+    () => mergeGameCollections(games, featuredGames, newGames),
+    [games, featuredGames, newGames]
+  )
+
+  useEffect(() => {
+    if (!selectorGames.length) {
+      return
+    }
+
+    setActiveIndex((current) => modulo(current, selectorGames.length))
+  }, [selectorGames.length])
+
+  const visibleGames = useMemo(
+    () => buildVisibleGames(selectorGames, activeIndex),
+    [selectorGames, activeIndex]
+  )
+  const activeGame = selectorGames[activeIndex] ?? null
+
+  const goPrev = () => {
+    if (!selectorGames.length) {
+      return
+    }
+
+    setActiveIndex((current) => modulo(current - 1, selectorGames.length))
+  }
+
+  const goNext = () => {
+    if (!selectorGames.length) {
+      return
+    }
+
+    setActiveIndex((current) => modulo(current + 1, selectorGames.length))
+  }
+
   return (
-    <div className="app">
-      <nav className="navbar">
-        <div className="container nav-container">
-          <div className="logo">
-            <span className="logo-text">GAME HUB</span>
-          </div>
-          <div className="nav-links">
-            <button
-              className={activeSection === 'home' ? 'active' : ''}
-              onClick={() => setActiveSection('home')}
-            >
-              Home
-            </button>
-            <button
-              className={activeSection === 'games' ? 'active' : ''}
-              onClick={() => setActiveSection('games')}
-            >
-              Games
-            </button>
-          </div>
-        </div>
-      </nav>
+    <div className="bios-page">
+      <div className="bios-backdrop" aria-hidden="true" />
 
-      <main className="main-content">
-        <section className="games-section">
-          <div className="container section-header">
-            <h1>{activeSection === 'home' ? 'Featured Games' : 'All Games'}</h1>
-            <p>{loading ? 'Loading the latest game catalog...' : `${games.length} games loaded from the API`}</p>
-            {error ? <p className="section-error">{error}</p> : null}
-          </div>
+      <main className="bios-shell">
+        {/* <header className="bios-topbar">
+          <span className="bios-bumper">L1</span>
+          <nav className="bios-nav" aria-label="Game sections">
+            {topNavItems.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={`bios-nav-item ${item === 'Bios' ? 'is-active' : ''}`}
+              >
+                {item}
+              </button>
+            ))}
+          </nav>
+          <span className="bios-bumper">R1</span>
+        </header> */}
 
-          {loading ? (
-            <div className="container loading-state">Loading games...</div>
-          ) : (
-            <div className="games-grid container">
-              {visibleGames.map((game) => (
-                <GameCard
-                  key={game.id}
-                  game={game}
-                  onClick={() => setActiveSection('games')}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+        {loading ? (
+          <div className="bios-loading">Loading game selector...</div>
+        ) : (
+          <>
+            <section className="bios-status-bar">
+              <div className="bios-status-item">
+                {/* <span className="bios-status-label">API Endpoint</span> */}
+                <strong>{games.length} Games Loaded</strong>
+              </div>
+              <div className="bios-status-item">
+                <span className="bios-status-label">Featured</span>
+                <strong>{featuredGames.length}</strong>
+              </div>
+              <div className="bios-status-item">
+                <span className="bios-status-label">New Games</span>
+                <strong>{newGames.length}</strong>
+              </div>
+              <div className="bios-status-item">
+                <span className="bios-status-label">Active Game</span>
+                <strong>{activeGame?.name ?? 'None Selected'}</strong>
+              </div>
+            </section>
+
+            <section className="bios-rail">
+              <button type="button" className="bios-arrow bios-arrow-left" onClick={goPrev} aria-label="Previous game">
+                <span className="bios-arrow-icon" aria-hidden="true">&#8249;</span>
+              </button>
+
+              <div className="bios-card-row" aria-label="Game list">
+                {visibleGames.map((game) => (
+                  <div
+                    key={`${game.id}-${game.offset}`}
+                    className={`bios-card-slot ${game.sourceIndex === activeIndex ? 'is-center' : ''}`}
+                  >
+                    <GameCard
+                      game={game}
+                      progress={game.progress}
+                      isActive={game.sourceIndex === activeIndex}
+                      onClick={() => setActiveIndex(game.sourceIndex)}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button type="button" className="bios-arrow bios-arrow-right" onClick={goNext} aria-label="Next game">
+                <span className="bios-arrow-icon" aria-hidden="true">&#8250;</span>
+              </button>
+            </section>
+
+            <section className="bios-footer">
+              <div className="bios-active-copy">
+                <p className="bios-active-slug">{activeGame?.slug ?? 'no-slug'}</p>
+                <h1>{activeGame?.name ?? 'Game Hub'}</h1>
+                <p>{activeGame?.description ?? 'Select a game to inspect its profile and launch state.'}</p>
+                {typeof activeGame?.total_players === 'number' ? (
+                  <p className="bios-active-players">total players // {activeGame.total_players}</p>
+                ) : null}
+              </div>
+
+              <div className="bios-controls">
+                <span>Select</span>
+                <span>Navigate</span>
+                <span>Back</span>
+              </div>
+            </section>
+
+            <section className="bios-api-list">
+              <div className="bios-api-list-header">
+                <p className="bios-active-slug">Games From API Endpoint</p>
+                <strong>{games.length} Total Entries</strong>
+              </div>
+              <div className="bios-api-grid">
+                {games.map((game, index) => (
+                  <button
+                    key={game.id ?? index}
+                    type="button"
+                    className={`bios-api-item ${activeGame?.id === game.id ? 'is-active' : ''}`}
+                    onClick={() => {
+                      const selectorIndex = selectorGames.findIndex((item) => item.id === game.id)
+
+                      if (selectorIndex >= 0) {
+                        setActiveIndex(selectorIndex)
+                      }
+                    }}
+                  >
+                    <span className="bios-api-name">{game.name ?? 'Unnamed Game'}</span>
+        
+                  </button>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {error ? <p className="bios-error">{error}</p> : null}
       </main>
-
-      <footer className="footer">
-        <div className="container">
-          <p>&copy; 2026 Game Hub. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   )
 }
