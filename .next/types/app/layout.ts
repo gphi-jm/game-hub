@@ -1,4 +1,4 @@
-// File: C:\xampp\htdocs\ghub\app\layout.js
+// File: C:\Users\Admin\Desktop\PROJECTS\Vue\ghub\app\layout.js
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
