@@ -7,10 +7,33 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background:
-    radial-gradient(circle at top, rgba(66, 216, 255, 0.16), transparent 30%),
-    linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    radial-gradient(circle at top right, rgba(66, 216, 255, 0.08), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(255, 138, 61, 0.06), transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(66, 216, 255, 0.03) 2px,
+      rgba(66, 216, 255, 0.03) 4px
+    ),
+    linear-gradient(135deg, #0a0e27 0%, #1a1a3e 50%, #0f1a2e 100%);
   color: #fff;
   min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(66, 216, 255, 0.04) 0%, transparent 70%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 103, 200, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 html,

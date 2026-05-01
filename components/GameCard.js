@@ -23,14 +23,13 @@ export { resolveImageUrl }
 export default function GameCard({
   game,
   isActive = false,
-  progress = 0,
   offset = 0,
   onClick,
   href = '#',
 }) {
   const imageSrc = resolveImageUrl(game.image_url ?? game.image)
+  const theme = game.theme ?? {}
   const title = game.name ?? game.title ?? 'Unknown Game'
-  const badge = game.is_featured ? 'Featured' : game.is_new ? 'New Drop' : `Game ${game.game_id ?? game.id ?? '--'}`
   const canPlay = href !== '#'
 
   const imageX = useSpring(useMotionValue(0), { stiffness: 180, damping: 20 })
@@ -67,7 +66,15 @@ export default function GameCard({
       aria-pressed={isActive}
       whileHover={{ y: -10 }}
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-      style={{ zIndex: 20 - Math.abs(offset) }}
+      style={{
+        zIndex: 20 - Math.abs(offset),
+        '--card-accent': theme.accent ?? '#bf9000',
+        '--card-accent-soft': theme.accentSoft ?? theme.soft ?? 'rgba(191, 144, 0, 0.72)',
+        '--card-glow': theme.glow ?? 'rgba(191, 144, 0, 0.28)',
+        '--card-button-fg': theme.buttonFg ?? '#122209',
+        '--card-base': theme.bg ?? 'rgba(16, 33, 10, 0.6)',
+        '--card-base-2': theme.bg2 ?? 'rgba(5, 10, 6, 0.68)',
+      }}
     >
       <div className="cover-card-frame">
         <motion.div className="cover-card-poster" style={{ x: imageX, y: imageY }}>
@@ -78,8 +85,6 @@ export default function GameCard({
       </div>
 
       <div className="cover-card-copy">
-        <span className="cover-card-badge">{badge}</span>
-        <span className="cover-card-progress">{progress}%</span>
         <span className="cover-card-title">{title}</span>
         <a
           className={`cover-card-play ${canPlay ? '' : 'is-disabled'}`.trim()}

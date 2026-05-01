@@ -1,10 +1,47 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import GameCard, { resolveImageUrl } from '../components/GameCard'
+import bybetLogo from '../src/assets/bybet.png'
 
-const API_URL = 'https://docking-635955947416.asia-east1.run.app/api/games/'
+const API_URL = '/api/games'
+
+const cardThemes = [
+  {
+    bg: 'rgba(39, 78, 19, 0.72)',
+    bg2: 'rgba(22, 38, 13, 0.84)',
+    accent: '#bf9000',
+    accentSoft: 'rgba(191, 144, 0, 0.72)',
+    glow: 'rgba(191, 144, 0, 0.26)',
+    buttonFg: '#f3f6f4',
+  },
+  {
+    bg: 'rgba(33, 68, 16, 0.72)',
+    bg2: 'rgba(16, 28, 10, 0.84)',
+    accent: '#f3f6f4',
+    accentSoft: 'rgba(243, 246, 244, 0.72)',
+    glow: 'rgba(243, 246, 244, 0.2)',
+    buttonFg: '#16260d',
+  },
+  {
+    bg: 'rgba(52, 88, 28, 0.72)',
+    bg2: 'rgba(22, 38, 13, 0.84)',
+    accent: '#d8b84a',
+    accentSoft: 'rgba(216, 184, 74, 0.72)',
+    glow: 'rgba(216, 184, 74, 0.24)',
+    buttonFg: '#16260d',
+  },
+  {
+    bg: 'rgba(26, 51, 13, 0.72)',
+    bg2: 'rgba(12, 22, 8, 0.84)',
+    accent: '#bfe7a8',
+    accentSoft: 'rgba(191, 231, 168, 0.72)',
+    glow: 'rgba(191, 231, 168, 0.2)',
+    buttonFg: '#16260d',
+  },
+]
 
 const modulo = (value, length) => ((value % length) + length) % length
 
@@ -25,6 +62,33 @@ const shortestOffset = (index, activeIndex, length) => {
 const buildProgress = (index) => {
   const value = ((index + 3) * 17) % 100
   return value === 0 ? 88 : value
+}
+
+const buildTheme = (index) => cardThemes[index % cardThemes.length]
+
+const normalizeGamePayload = (payload) => {
+  const root = Array.isArray(payload) ? { games: payload } : payload?.data ?? payload ?? {}
+  const games = Array.isArray(root.games) ? root.games : Array.isArray(payload?.games) ? payload.games : []
+  const featuredGames = Array.isArray(root.featured_games)
+    ? root.featured_games
+    : Array.isArray(root.featuredGames)
+      ? root.featuredGames
+      : Array.isArray(payload?.featured_games)
+        ? payload.featured_games
+        : Array.isArray(payload?.featuredGames)
+          ? payload.featuredGames
+          : []
+  const newGames = Array.isArray(root.new_games)
+    ? root.new_games
+    : Array.isArray(root.newGames)
+      ? root.newGames
+      : Array.isArray(payload?.new_games)
+        ? payload.new_games
+        : Array.isArray(payload?.newGames)
+          ? payload.newGames
+          : []
+
+  return { games, featuredGames, newGames }
 }
 
 const resolveGameHref = (game) => {
@@ -67,10 +131,10 @@ export default function Home() {
   const [newGames, setNewGames] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [payloadDebug, setPayloadDebug] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
-  const [scrollUnlocked, setScrollUnlocked] = useState(false)
   const [viewportWidth, setViewportWidth] = useState(1440)
-  const featuredSectionRef = useRef(null)
+  const isMobileViewport = viewportWidth <= 820
 
   useEffect(() => {
     const controller = new AbortController()
@@ -87,17 +151,28 @@ export default function Home() {
         }
 
         const payload = await response.json()
-        const normalizedGames = Array.isArray(payload?.data?.games) ? payload.data.games : []
-        const normalizedFeaturedGames = Array.isArray(payload?.data?.featured_games)
-          ? payload.data.featured_games.map((game) => ({ ...game, is_featured: true }))
-          : []
-        const normalizedNewGames = Array.isArray(payload?.data?.new_games)
-          ? payload.data.new_games.map((game) => ({ ...game, is_new: true }))
-          : []
+        const { games: rawGames, featuredGames: rawFeaturedGames, newGames: rawNewGames } = normalizeGamePayload(payload)
 
-        setGames(normalizedGames)
-        setFeaturedGames(normalizedFeaturedGames)
-        setNewGames(normalizedNewGames)
+        const themedGames = rawGames.map((game, index) => ({ ...game, theme: buildTheme(index) }))
+        const themedFeaturedGames = rawFeaturedGames.map((game, index) => ({
+          ...game,
+          is_featured: true,
+          theme: buildTheme(index),
+        }))
+        const themedNewGames = rawNewGames.map((game, index) => ({
+          ...game,
+          is_new: true,
+          theme: buildTheme(index + themedFeaturedGames.length),
+        }))
+
+        setGames(themedGames)
+        setFeaturedGames(themedFeaturedGames)
+        setNewGames(themedNewGames)
+        setPayloadDebug(
+          `payload keys: ${Object.keys(Array.isArray(payload) ? { games: payload } : payload?.data ?? payload ?? {})
+            .sort()
+            .join(', ') || 'none'}`
+        )
       } catch (fetchError) {
         if (fetchError.name !== 'AbortError') {
           setError('Unable to load games right now.')
@@ -158,12 +233,12 @@ export default function Home() {
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
 
-    document.body.style.overflow = scrollUnlocked ? 'auto' : 'hidden'
+    document.body.style.overflow = isMobileViewport ? 'auto' : 'hidden'
 
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [scrollUnlocked])
+  }, [isMobileViewport])
 
   const activeGame = selectorGames[activeIndex] ?? null
   const activeBackground = resolveImageUrl(activeGame?.image_url ?? activeGame?.image)
@@ -238,22 +313,11 @@ export default function Home() {
     }
   }
 
-  const revealFeaturedGames = () => {
-    setScrollUnlocked(true)
-
-    window.setTimeout(() => {
-      featuredSectionRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
-    }, 60)
-  }
-
   const featuredShowcase = featuredGames.length ? featuredGames.slice(0, 4) : selectorGames.slice(0, 4)
 
   return (
     <div className="coverflow-page">
-      {/* <motion.div
+      <motion.div
         className="coverflow-background"
         key={activeBackground || 'fallback'}
         initial={{ opacity: 0.4, scale: 1.06 }}
@@ -261,11 +325,21 @@ export default function Home() {
         transition={{ duration: 0.55, ease: [0.17, 0.67, 0.16, 0.99] }}
         style={{
           backgroundImage: activeBackground ? `url(${activeBackground})` : undefined,
+          opacity: activeBackground ? 0.24 : 0.08,
         }}
-      /> */}
+      />
 
       <main className="coverflow-shell">
         <section className="coverflow-hero">
+          <div className="coverflow-brandmark" aria-hidden="true">
+            <Image
+              src={bybetLogo}
+              alt="ByBet"
+              priority
+              className="coverflow-brandmark-image"
+            />
+          </div>
+
           <section className="coverflow-status realism-border">
             <div>
               <span className="coverflow-label">Library</span>
@@ -284,6 +358,10 @@ export default function Home() {
               <strong>{activeGame?.name ?? 'None Selected'}</strong>
             </div>
           </section>
+
+          {!loading && process.env.NODE_ENV !== 'production' ? (
+            <p className="section-debug">{payloadDebug}</p>
+          ) : null}
 
           {loading ? (
             <div className="coverflow-loading">Loading cover flow...</div>
@@ -361,66 +439,24 @@ export default function Home() {
 
               <section className="coverflow-footer">
                 <div className="coverflow-copy">
-                  {/* <p className="coverflow-slug">{activeGame?.slug ?? 'no-slug'}</p> */}
+                  <p className="coverflow-slug">Active selection</p>
                   <h1>{activeGame?.name ?? 'Game Hub'}</h1>
                   <p>{activeGame?.description ?? 'Select a game to inspect its profile and launch state.'}</p>
-                  {/* {typeof activeGame?.total_players === 'number' ? (
+                  {typeof activeGame?.total_players === 'number' ? (
                     <p className="coverflow-meta">total players // {activeGame.total_players}</p>
-                  ) : null} */}
+                  ) : null}
                 </div>
 
-                {/* <div className="coverflow-controls">
+                <div className="coverflow-controls" aria-hidden="true">
                   <span>Drag</span>
                   <span>Swipe</span>
                   <span>Arrow Keys</span>
-                </div> */}
+                </div>
               </section>
 
-              {!scrollUnlocked ? (
-                <div className="scroll-gate">
-                  <button type="button" className="scroll-gate-button" onClick={revealFeaturedGames}>
-                    Click To Scroll
-                  </button>
-                </div>
-              ) : null}
             </>
           )}
         </section>
-
-        <section ref={featuredSectionRef} className="featured-showcase realism-border">
-          <div className="featured-grid">
-            {featuredShowcase.map((game, index) => {
-              const gameHref = resolveGameHref(game)
-              const gameImage = resolveImageUrl(game.image_url ?? game.image)
-              const canPlay = gameHref !== '#'
-
-              return (
-                <article
-                  key={game.id ?? index}
-                  className={`featured-card ${index === 0 ? 'featured-card-primary' : ''}`}
-                  style={{ backgroundImage: gameImage ? `url(${gameImage})` : undefined }}
-                >
-                  <div className="featured-card-overlay">
-                    
-                    <a
-                      className={`featured-card-play ${canPlay ? '' : 'is-disabled'}`.trim()}
-                      href={gameHref}
-                      aria-disabled={!canPlay}
-                      onClick={(event) => {
-                        if (!canPlay) {
-                          event.preventDefault()
-                        }
-                      }}
-                    >
-                      Play
-                    </a>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </section>
-
         {error ? <p className="coverflow-error">{error}</p> : null}
       </main>
     </div>
