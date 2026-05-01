@@ -76,6 +76,10 @@ export default function Home() {
   const [viewportWidth, setViewportWidth] = useState(1440)
   const isMobileViewport = viewportWidth <= 820
   const prefersReducedMotion = useReducedMotion()
+  const slotSpacing = Math.max(84, Math.min(180, Math.round(viewportWidth * 0.14)))
+  const activeSlotLift = Math.round(Math.max(-18, Math.min(-8, -viewportWidth * 0.012)))
+  const inactiveSlotLift = Math.round(Math.max(6, Math.min(14, viewportWidth * 0.01)))
+  const slotDepthStep = viewportWidth <= 560 ? 0.05 : viewportWidth <= 820 ? 0.06 : 0.08
 
   useEffect(() => {
     const controller = new AbortController()
@@ -185,7 +189,7 @@ export default function Home() {
       y: 0,
       transition: prefersReducedMotion
         ? { duration: 0 }
-        : { duration: 0.7, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.12 },
+        : { duration: 0.8, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.08 },
     },
   }
 
@@ -194,7 +198,7 @@ export default function Home() {
     show: {
       opacity: 1,
       y: 0,
-      transition: prefersReducedMotion ? { duration: 0 } : { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+      transition: prefersReducedMotion ? { duration: 0 } : { duration: 0.56, ease: [0.22, 1, 0.36, 1] },
     },
   }
 
@@ -260,7 +264,7 @@ export default function Home() {
                     initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={prefersReducedMotion ? undefined : { opacity: 0, y: -6 }}
-                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
                   >
                     {activeGame?.name ?? 'None Selected'}
                   </motion.strong>
@@ -285,17 +289,26 @@ export default function Home() {
                   <motion.div
                     key={`slot-${game.offset}`}
                     className={`bios-card-slot ${game.sourceIndex === activeIndex ? 'is-center' : ''}`}
-                    initial={prefersReducedMotion ? false : { opacity: 0, y: 18, scale: 0.92 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    initial={prefersReducedMotion ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     transition={
                       prefersReducedMotion
                         ? { duration: 0 }
                         : {
-                            duration: 0.55,
+                            duration: 0.56,
                             ease: [0.22, 1, 0.36, 1],
-                            delay: Math.abs(game.offset) * 0.05,
+                            delay: Math.abs(game.offset) * 0.018,
                           }
                     }
+                    style={{
+                      '--slot-x': `${game.offset * slotSpacing}px`,
+                      '--slot-y': `${game.sourceIndex === activeIndex ? activeSlotLift : inactiveSlotLift + Math.abs(game.offset) * 4}px`,
+                      '--slot-rotate-x': `${game.sourceIndex === activeIndex ? -2 : 8 + Math.abs(game.offset) * 2}deg`,
+                      '--slot-rotate-y': `${game.offset * -18}deg`,
+                      '--slot-rotate-z': `${game.offset < 0 ? 5 : game.offset > 0 ? -5 : 0}deg`,
+                      '--slot-scale': game.sourceIndex === activeIndex ? 1.06 : Math.max(0.8, 1 - Math.abs(game.offset) * slotDepthStep),
+                      zIndex: game.sourceIndex === activeIndex ? 4 : 3 - Math.abs(game.offset),
+                    }}
                   >
                     <GameCard
                       game={game}
@@ -322,6 +335,7 @@ export default function Home() {
 
             <motion.section className="bios-footer" variants={sectionVariants}>
               <div className="bios-active-copy">
+                <span className="bios-active-slug">active selection</span>
                 
                 <AnimatePresence mode="wait">
                   <motion.h1
@@ -356,7 +370,6 @@ export default function Home() {
                   </motion.p>
                 ) : null}
               </div>
-
               
             </motion.section>
 

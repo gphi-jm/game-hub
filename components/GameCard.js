@@ -43,23 +43,23 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
   const baseZ = isActive ? 80 : -depth * 90
   const baseRotateY = offset * -18
   const baseScale = isActive ? 1.08 : Math.max(0.8, 1 - depth * 0.08)
-  const rotateX = useSpring(useMotionValue(0), { stiffness: 120, damping: 26 })
-  const rotateY = useSpring(useMotionValue(0), { stiffness: 120, damping: 26 })
-  const imageX = useSpring(useMotionValue(0), { stiffness: 95, damping: 24 })
-  const imageY = useSpring(useMotionValue(0), { stiffness: 95, damping: 24 })
-  const glareX = useSpring(useMotionValue(50), { stiffness: 90, damping: 22 })
-  const glareY = useSpring(useMotionValue(50), { stiffness: 90, damping: 22 })
-  const glare = useMotionTemplate`radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.18), transparent 28%)`
+  const rotateX = useSpring(useMotionValue(0), { stiffness: 42, damping: 24 })
+  const rotateY = useSpring(useMotionValue(0), { stiffness: 42, damping: 24 })
+  const imageX = useSpring(useMotionValue(0), { stiffness: 38, damping: 22 })
+  const imageY = useSpring(useMotionValue(0), { stiffness: 38, damping: 22 })
+  const glareX = useSpring(useMotionValue(50), { stiffness: 32, damping: 20 })
+  const glareY = useSpring(useMotionValue(50), { stiffness: 32, damping: 20 })
+  const glare = useMotionTemplate`radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.14), transparent 30%)`
 
   const handlePointerMove = (event) => {
     const rect = event.currentTarget.getBoundingClientRect()
     const px = (event.clientX - rect.left) / rect.width
     const py = (event.clientY - rect.top) / rect.height
 
-    rotateY.set((px - 0.5) * 10)
-    rotateX.set((0.5 - py) * 10)
-    imageX.set((px - 0.5) * 14)
-    imageY.set((py - 0.5) * 14)
+    rotateY.set((px - 0.5) * 5)
+    rotateX.set((0.5 - py) * 5)
+    imageX.set((px - 0.5) * 6)
+    imageY.set((py - 0.5) * 6)
     glareX.set(px * 100)
     glareY.set(py * 100)
   }
@@ -90,11 +90,11 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
         }
       }}
       whileHover={{
-        y: isActive ? -8 : -6,
-        scale: isActive ? 1.02 : 1.012,
+        y: isActive ? -3 : -1,
+        scale: isActive ? 1.01 : 1.004,
       }}
-      whileTap={{ scale: 0.992 }}
-      transition={{ type: 'spring', stiffness: 210, damping: 34, mass: 1.02 }}
+      whileTap={{ scale: 0.996 }}
+      transition={{ type: 'spring', stiffness: 62, damping: 28, mass: 1.08 }}
       transformTemplate={(generated) =>
         `translate3d(${baseX}px, ${baseY}px, ${baseZ}px) rotateY(${baseRotateY}deg) scale(${baseScale}) ${generated}`
       }
@@ -107,9 +107,9 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
       <motion.div
         className="bios-card-media"
         initial={false}
-        animate={{ scale: isActive ? 1.1 : 1.03 }}
-        whileHover={{ scale: isActive ? 1.12 : 1.08, x: 3 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        animate={{ scale: 1 }}
+        whileHover={{ scale: 1, x: 0 }}
+        transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
         style={{ x: imageX, y: imageY }}
       >
         {imageSrc ? <img src={imageSrc} alt="" aria-hidden="true" className="bios-card-image" /> : null}
@@ -136,9 +136,9 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
       <motion.div
         className="bios-card-content"
         initial={false}
-        animate={{ y: isActive ? 0 : 2 }}
-        whileHover={{ y: -3 }}
-        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+        animate={{ y: isActive ? 0 : 1 }}
+        whileHover={{ y: 0 }}
+        transition={{ duration: 0.68, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* <motion.span className="bios-card-badge" whileHover={{ opacity: 1 }}>
           {badge}
@@ -155,9 +155,9 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
         <motion.span
           className="bios-card-label"
           initial={false}
-          animate={{ letterSpacing: isActive ? '0.2em' : '0.16em' }}
-          whileHover={{ letterSpacing: '0.22em' }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          animate={{ letterSpacing: isActive ? '0.18em' : '0.15em' }}
+          whileHover={{ letterSpacing: '0.18em' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           {title}
         </motion.span>
