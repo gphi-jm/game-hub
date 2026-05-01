@@ -18,15 +18,37 @@ const resolveImageUrl = (value) => {
   return raw
 }
 
-export default function GameCard({ game, isActive = false, progress = 0, onClick }) {
+const resolveGameUrl = (value) => {
+  const raw = value?.game_url ?? value
+
+  if (!raw || typeof raw !== 'string') {
+    return '#'
+  }
+
+  if (raw.startsWith('/')) {
+    return `${API_ORIGIN}${raw}`
+  }
+
+  return raw
+}
+
+export default function GameCard({ game, isActive = false, progress = 0, onClick, offset = 0 }) {
   const imageSrc = resolveImageUrl(game.image_url ?? game.image)
   const title = game.name ?? game.title ?? 'Unknown Game'
-  const rotateX = useSpring(useMotionValue(0), { stiffness: 180, damping: 18 })
-  const rotateY = useSpring(useMotionValue(0), { stiffness: 180, damping: 18 })
-  const imageX = useSpring(useMotionValue(0), { stiffness: 140, damping: 18 })
-  const imageY = useSpring(useMotionValue(0), { stiffness: 140, damping: 18 })
-  const glareX = useSpring(useMotionValue(50), { stiffness: 120, damping: 20 })
-  const glareY = useSpring(useMotionValue(50), { stiffness: 120, damping: 20 })
+  const gameUrl = resolveGameUrl(game)
+  const canLaunch = gameUrl !== '#'
+  const depth = Math.min(Math.abs(offset), 3)
+  const baseX = offset * 38
+  const baseY = isActive ? -10 : 14 + depth * 6
+  const baseZ = isActive ? 80 : -depth * 90
+  const baseRotateY = offset * -18
+  const baseScale = isActive ? 1.08 : Math.max(0.8, 1 - depth * 0.08)
+  const rotateX = useSpring(useMotionValue(0), { stiffness: 120, damping: 26 })
+  const rotateY = useSpring(useMotionValue(0), { stiffness: 120, damping: 26 })
+  const imageX = useSpring(useMotionValue(0), { stiffness: 95, damping: 24 })
+  const imageY = useSpring(useMotionValue(0), { stiffness: 95, damping: 24 })
+  const glareX = useSpring(useMotionValue(50), { stiffness: 90, damping: 22 })
+  const glareY = useSpring(useMotionValue(50), { stiffness: 90, damping: 22 })
   const glare = useMotionTemplate`radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.18), transparent 28%)`
 
   const handlePointerMove = (event) => {
@@ -52,19 +74,30 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
   }
 
   return (
-    <motion.button
+    <motion.div
       layout
       className={`bios-card ${isActive ? 'is-active' : ''}`}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
       aria-pressed={isActive}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
-      whileHover={{
-        y: isActive ? -12 : -10,
-        scale: isActive ? 1.035 : 1.025,
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick?.(event)
+        }
       }}
-      whileTap={{ scale: 0.985 }}
-      transition={{ type: 'spring', stiffness: 430, damping: 28, mass: 0.75 }}
+      whileHover={{
+        y: isActive ? -8 : -6,
+        scale: isActive ? 1.02 : 1.012,
+      }}
+      whileTap={{ scale: 0.992 }}
+      transition={{ type: 'spring', stiffness: 210, damping: 34, mass: 1.02 }}
+      transformTemplate={(generated) =>
+        `translate3d(${baseX}px, ${baseY}px, ${baseZ}px) rotateY(${baseRotateY}deg) scale(${baseScale}) ${generated}`
+      }
       style={{
         rotateX,
         rotateY,
@@ -75,8 +108,8 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
         className="bios-card-media"
         initial={false}
         animate={{ scale: isActive ? 1.1 : 1.03 }}
-        whileHover={{ scale: isActive ? 1.16 : 1.12, x: 4 }}
-        transition={{ duration: 0.22, ease: 'easeOut' }}
+        whileHover={{ scale: isActive ? 1.12 : 1.08, x: 3 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         style={{ x: imageX, y: imageY }}
       >
         {imageSrc ? <img src={imageSrc} alt="" aria-hidden="true" className="bios-card-image" /> : null}
@@ -84,21 +117,28 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
 
       <motion.div className="bios-card-glare" aria-hidden="true" style={{ backgroundImage: glare }} />
       <div className="bios-card-scan" aria-hidden="true" />
-      <div className="bios-card-thunder" aria-hidden="true">
-        <span className="bios-card-bolt bios-card-bolt-main" />
-        <span className="bios-card-bolt bios-card-bolt-branch" />
-        <span className="bios-card-spark bios-card-spark-a" />
-        <span className="bios-card-spark bios-card-spark-b" />
-        <span className="bios-card-spark bios-card-spark-c" />
-        <span className="bios-card-spark bios-card-spark-d" />
-      </div>
+
+      <a
+        className={`bios-card-launcher ${canLaunch ? '' : 'is-disabled'}`.trim()}
+        href={gameUrl}
+        aria-disabled={!canLaunch}
+        onClick={(event) => {
+          event.stopPropagation()
+
+          if (!canLaunch) {
+            event.preventDefault()
+          }
+        }}
+      >
+        Launch
+      </a>
 
       <motion.div
         className="bios-card-content"
         initial={false}
         animate={{ y: isActive ? 0 : 2 }}
-        whileHover={{ y: -6 }}
-        transition={{ duration: 0.16, ease: 'easeOut' }}
+        whileHover={{ y: -3 }}
+        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* <motion.span className="bios-card-badge" whileHover={{ opacity: 1 }}>
           {badge}
@@ -117,11 +157,11 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
           initial={false}
           animate={{ letterSpacing: isActive ? '0.2em' : '0.16em' }}
           whileHover={{ letterSpacing: '0.22em' }}
-          transition={{ duration: 0.14, ease: 'easeOut' }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
           {title}
         </motion.span>
       </motion.div>
-    </motion.button>
+    </motion.div>
   )
 }
