@@ -38,11 +38,9 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
   const gameUrl = resolveGameUrl(game)
   const canLaunch = gameUrl !== '#'
   const depth = Math.min(Math.abs(offset), 3)
-  const baseX = offset * 38
-  const baseY = isActive ? -10 : 14 + depth * 6
-  const baseZ = isActive ? 80 : -depth * 90
-  const baseRotateY = offset * -18
-  const baseScale = isActive ? 1.08 : Math.max(0.8, 1 - depth * 0.08)
+  const baseScale = isActive ? 1.006 : Math.max(0.965, 1 - depth * 0.01)
+  const baseRotateX = isActive ? -0.4 : 1.2 + depth * 0.45
+  const baseRotateY = offset * -0.6
   const rotateX = useSpring(useMotionValue(0), { stiffness: 42, damping: 24 })
   const rotateY = useSpring(useMotionValue(0), { stiffness: 42, damping: 24 })
   const imageX = useSpring(useMotionValue(0), { stiffness: 38, damping: 22 })
@@ -56,10 +54,10 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
     const px = (event.clientX - rect.left) / rect.width
     const py = (event.clientY - rect.top) / rect.height
 
-    rotateY.set((px - 0.5) * 5)
-    rotateX.set((0.5 - py) * 5)
-    imageX.set((px - 0.5) * 6)
-    imageY.set((py - 0.5) * 6)
+    rotateY.set((px - 0.5) * 2.6)
+    rotateX.set((0.5 - py) * 2.6)
+    imageX.set((px - 0.5) * 3.6)
+    imageY.set((py - 0.5) * 3.6)
     glareX.set(px * 100)
     glareY.set(py * 100)
   }
@@ -90,13 +88,13 @@ export default function GameCard({ game, isActive = false, progress = 0, onClick
         }
       }}
       whileHover={{
-        y: isActive ? -3 : -1,
-        scale: isActive ? 1.01 : 1.004,
+        y: isActive ? -1.5 : -0.8,
+        scale: isActive ? 1.004 : 1.001,
       }}
       whileTap={{ scale: 0.996 }}
       transition={{ type: 'spring', stiffness: 62, damping: 28, mass: 1.08 }}
       transformTemplate={(generated) =>
-        `translate3d(${baseX}px, ${baseY}px, ${baseZ}px) rotateY(${baseRotateY}deg) scale(${baseScale}) ${generated}`
+        `rotateX(${baseRotateX}deg) rotateY(${baseRotateY}deg) scale(${baseScale}) ${generated}`
       }
       style={{
         rotateX,
