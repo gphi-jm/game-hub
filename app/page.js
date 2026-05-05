@@ -1,5 +1,6 @@
 'use client'
 
+<<<<<<< HEAD
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import GameCard, { resolveImageUrl } from '../components/GameCard'
@@ -425,4 +426,10 @@ export default function Home() {
       </main>
     </div>
   )
+=======
+import GameHubPage from '../components/GameHubPage'
+
+export default function Home() {
+  return <GameHubPage />
+>>>>>>> feature/add_dockerfile
 }

@@ -190,8 +190,9 @@ html,
   align-items: center;
   gap: 0.45rem;
   padding: 1rem 1rem 1.1rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.94), rgba(0, 0, 0, 0.56) 60%, transparent);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border-top: 1px solid rgba(124, 197, 106, 0.18);
+  backdrop-filter: none;
 }
 
 .game-badges {
@@ -259,6 +260,112 @@ html,
   box-shadow: 0 0 28px var(--accent-glow);
 }
 
+.leaderboard {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(124, 197, 106, 0.18);
+  background:
+    linear-gradient(180deg, rgba(7, 17, 8, 0.92), rgba(11, 24, 10, 0.88)),
+    radial-gradient(circle at top, rgba(124, 197, 106, 0.12), transparent 42%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.34),
+    0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.leaderboard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(124, 197, 106, 0.12), transparent),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 7px,
+      rgba(255, 255, 255, 0.02) 7px,
+      rgba(255, 255, 255, 0.02) 8px
+    );
+  opacity: 0.55;
+}
+
+.leaderboard-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem 0.4rem;
+  border-bottom: 1px solid rgba(124, 197, 106, 0.2);
+  background: linear-gradient(180deg, rgba(124, 197, 106, 0.16), transparent);
+}
+
+.leaderboard-header h2,
+.leaderboard-title {
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #31ff8f;
+  text-shadow: 0 0 12px rgba(49, 255, 143, 0.16);
+}
+
+.leaderboard-list {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.55rem;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(124, 197, 106, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+  color: #edf8ea;
+}
+
+.leaderboard-row:hover,
+.leaderboard-row.is-active {
+  border-color: rgba(49, 255, 143, 0.34);
+  background: rgba(49, 255, 143, 0.08);
+}
+
+.leaderboard-rank {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #051009;
+  background: linear-gradient(180deg, #5bff97, #18c964);
+  box-shadow: 0 0 14px rgba(49, 255, 143, 0.18);
+}
+
+.leaderboard-name {
+  min-width: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard-score {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(233, 251, 235, 0.82);
+}
+
 .footer {
   padding: 1rem 0 1.4rem;
   text-align: center;
@@ -302,5 +409,14 @@ html,
 
   .game-description {
     font-size: 0.78rem;
+  }
+
+  .leaderboard-row {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    padding: 0.5rem 0.55rem;
+  }
+
+  .leaderboard-name {
+    font-size: 0.8rem;
   }
 }
